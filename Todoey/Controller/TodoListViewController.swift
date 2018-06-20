@@ -12,6 +12,11 @@ import CoreData
 class TodoListViewController: UITableViewController {
 
     var itemArray = [Item]()
+    var selectedCategory : Category? {
+        didSet {
+            loadItems()
+        }
+    }
     let defaults = UserDefaults.standard
     let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
 
@@ -19,8 +24,7 @@ class TodoListViewController: UITableViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view, typically from a nib.
-        loadItems()
-        print("\(FileManager.default.urls(for: .documentDirectory, in: .userDomainMask))")
+        //print("\(FileManager.default.urls(for: .documentDirectory, in: .userDomainMask))")
     }
 
     //MARK - TableView Datasource Methods
@@ -35,6 +39,7 @@ class TodoListViewController: UITableViewController {
         return itemArray.count
     }
 
+        //MARK: - TableView Delegate
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         // print(itemArray[indexPath.row])
         itemArray[indexPath.row].done = !itemArray[indexPath.row].done
@@ -42,14 +47,13 @@ class TodoListViewController: UITableViewController {
 //        context.delete(itemArray[indexPath.row])
 //        itemArray.remove(at: indexPath.row)
         saveItem()
-
         
         tableView.deselectRow(at: indexPath, animated: true)
         tableView.reloadData()
         
     }
     
-    //MARK - Add New Items
+    //MARK: - Save/Load Data
     func saveItem(){
         do {
             try context.save()
@@ -59,7 +63,14 @@ class TodoListViewController: UITableViewController {
     }
     
     func loadItems(with request: NSFetchRequest<Item> = Item.fetchRequest()) {
-
+        
+        let categoryPredicate = NSPredicate(format: "parentCategory.name MATCHES %@", selectedCategory!.name!)
+        if request.predicate != nil {
+            request.predicate = NSCompoundPredicate(type: .and, subpredicates: [request.predicate!, categoryPredicate])
+        } else {
+            request.predicate = categoryPredicate
+        }
+        
         do {
             itemArray = try context.fetch(request)
         } catch {
@@ -70,7 +81,7 @@ class TodoListViewController: UITableViewController {
     
     @IBAction func addButtonPress(_ sender: UIBarButtonItem) {
         let alert = UIAlertController(title: "Add New Todoey Item", message: "", preferredStyle: .alert)
-        var textfield = UITextField() //?? does this leak?
+        var textfield = UITextField()
         
         let action = UIAlertAction(title: "Add Item", style: .default) { (action) in
             // what will happen once the user clicks the add item button
@@ -78,6 +89,7 @@ class TodoListViewController: UITableViewController {
             let newItem = Item(context: self.context)
             newItem.title = textfield.text!
             newItem.done = false
+            newItem.parentCategory = self.selectedCategory
             self.itemArray.append( newItem )
 
             self.saveItem()
