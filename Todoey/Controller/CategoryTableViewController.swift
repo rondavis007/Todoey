@@ -8,6 +8,7 @@
 
 import UIKit
 import RealmSwift
+import ChameleonFramework
 
 let TODO_LIST_SEGUE_ID = "goToItems"
 
@@ -18,7 +19,7 @@ class CategoryTableViewController: SwipeTableViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         loadCategories()
-        
+        self.tableView.separatorStyle = .none
     }
     
     //MARK: - Tableview Datasource
@@ -30,6 +31,7 @@ class CategoryTableViewController: SwipeTableViewController {
         let cell = super.tableView(tableView, cellForRowAt: indexPath)
         
         cell.textLabel?.text = categories?[indexPath.row].name ?? "No Categories added yes"
+        cell.backgroundColor = UIColor(hexString: categories?[indexPath.row].colorInHex ?? "0x000")
         
         return cell
     }
@@ -73,6 +75,7 @@ class CategoryTableViewController: SwipeTableViewController {
             
             let newCategory = Category()
             newCategory.name = textfield.text!
+            newCategory.colorInHex = UIColor.randomFlat.hexValue()
             
             // create a new category item and add to list/database
             self.save(category: newCategory)
