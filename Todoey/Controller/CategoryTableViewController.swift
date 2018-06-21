@@ -9,26 +9,28 @@
 import UIKit
 import RealmSwift
 
-let cCATEGORYCELLID = "CategoryCell"
 let TODO_LIST_SEGUE_ID = "goToItems"
 
-class CategoryTableViewController: UITableViewController {
+class CategoryTableViewController: SwipeTableViewController {
     let realm = try! Realm()
     var categories : Results<Category>?
     
     override func viewDidLoad() {
         super.viewDidLoad()
         loadCategories()
+        
     }
-
+    
     //MARK: - Tableview Datasource
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return categories?.count ?? 1
     }
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: cCATEGORYCELLID, for: indexPath)
+        let cell = super.tableView(tableView, cellForRowAt: indexPath)
+        
         cell.textLabel?.text = categories?[indexPath.row].name ?? "No Categories added yes"
+        
         return cell
     }
     
@@ -46,6 +48,19 @@ class CategoryTableViewController: UITableViewController {
     func loadCategories() {
         categories =  realm.objects(Category.self)
         tableView.reloadData()
+    }
+    
+    //MARK: - Delete data from swipe
+    override func updateModel(at indexPath: IndexPath) {
+        if let delCategory = self.categories?[indexPath.row] {
+            do {
+                try self.realm.write {
+                    self.realm.delete(delCategory)
+                }
+            } catch {
+                print("Error deleting category, \(error)")
+            }
+        }
     }
     
     @IBAction func addButtonPressed(_ sender: UIBarButtonItem) {
@@ -74,6 +89,7 @@ class CategoryTableViewController: UITableViewController {
     
     //MARK: - Tableview Delegate
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        // go to next to do item screen
         performSegue(withIdentifier: TODO_LIST_SEGUE_ID, sender: self)
     }
     
@@ -84,5 +100,7 @@ class CategoryTableViewController: UITableViewController {
             destinationVC.selectedCategory = categories?[indexPath.row]
         }
     }
-
+    
 }
+
+
